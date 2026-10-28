@@ -21,9 +21,6 @@ function db_colleges(): array {
     });
 }
 
-/**
- * Fetch programmes directly from `dataexportprogrammecoursestructure` table.
- */
 function db_programmes(): array {
     return db_wrap(function () {
         $pdo = db();
@@ -66,8 +63,9 @@ function db_sessions(): array {
 function db_subjects(string $programmeId): array {
     return db_wrap(function () use ($programmeId) {
         $pdo = db();
+        $programmeId = trim($programmeId);
         
-        // 1. Try relational query if programme_subjects table exists
+        // 1. Try relational query if programme_subjects table has custom entries
         try {
             $st = $pdo->prepare(
                 'SELECT s.id AS sid, s.name, s.code AS scode, ps.paper_code, ps.paper_title
@@ -77,7 +75,7 @@ function db_subjects(string $programmeId): array {
             );
             $st->execute([$programmeId, $programmeId]);
             $rows = $st->fetchAll();
-            if ($rows) {
+            if (!empty($rows)) {
                 return array_map(fn($r) => [
                     'id'    => $r['paper_code'] !== '' ? $r['paper_code'] : 's' . $r['sid'],
                     'name'  => $r['name'],
@@ -85,11 +83,9 @@ function db_subjects(string $programmeId): array {
                     'title' => $r['paper_title'],
                 ], $rows);
             }
-        } catch (Throwable $e) {
-            // Ignore error and fall through to table query
-        }
+        } catch (Throwable $e) {}
 
-        // 2. Query dataexportprogrammecoursestructure table
+        // 2. Direct query against dataexportprogrammecoursestructure
         $sql = "SELECT `code` AS id, 
                        `title_english` AS name, 
                        `code`, 
@@ -97,9 +93,8 @@ function db_subjects(string $programmeId): array {
                 FROM `dataexportprogrammecoursestructure` 
                 WHERE `Programme ID` = :pid 
                    OR `code` = :pid 
-                   OR `title_english` LIKE :pname 
-                ORDER BY `title_english`";
-                
+                   OR `title_english` LIKE :pname";
+
         $st = $pdo->prepare($sql);
         $st->execute([
             ':pid'   => $programmeId,
@@ -107,15 +102,15 @@ function db_subjects(string $programmeId): array {
         ]);
         $rows = $st->fetchAll();
 
-        // 3. Fallback: Return top 200 records if no specific programme match
-        if (!$rows) {
+        // 3. Fallback: If no exact match found, query top 50 rows from dataexportprogrammecoursestructure
+        if (empty($rows)) {
             $rows = $pdo->query("SELECT `code` AS id, `title_english` AS name, `code`, `specialization` AS title 
                                  FROM `dataexportprogrammecoursestructure` 
-                                 LIMIT 200")->fetchAll();
+                                 LIMIT 50")->fetchAll();
         }
 
         return array_map(fn($r) => [
-            'id'    => (string)($r['id'] !== '' ? $r['id'] : $r['code']),
+            'id'    => (string)($r['code'] !== '' ? $r['code'] : $r['id']),
             'name'  => (string)$r['name'],
             'code'  => (string)$r['code'],
             'title' => (string)($r['title'] ?? ''),

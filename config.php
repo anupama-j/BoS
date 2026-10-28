@@ -11,15 +11,17 @@ return [
     //   'api'   -> e-Samarth Student Data API called live (fill in the 'api' section below)
     'source' => 'excel',
 
+        // Where the right-hand Programme/Subject panel gets its data:
+    'source' => 'db',
+
     'db' => [
-        // XAMPP: host 127.0.0.1, user root, empty password, any name (created automatically).
-        // InfinityFree: copy all four from vPanel > MySQL Databases (host like sql123.infinityfree.com,
-        // name like if0_43128506_papers, user like if0_43128506, password = your vPanel password).
-        'host' => '127.0.0.1',
-        'name' => 'papersetter_db',
-        'user' => 'root',
-        'pass' => '',
+        'host' => getenv('DB_HOST') ?: '127.0.0.1',
+        'name' => getenv('DB_NAME') ?: 'papersetter_db',
+        'user' => getenv('DB_USER') ?: 'root',
+        'pass' => getenv('DB_PASSWORD') ?: '',
+        'port' => getenv('DB_PORT') ?: '3306',
     ],
+
 
     /* ---- login ---- */
     'auth' => [

@@ -9,7 +9,7 @@ return [
     //   'db'    -> MySQL tables colleges/programmes/subjects/programme_subjects (schema.sql).
     //              Fill them with import_excel.php now, and with sync_api.php once API access arrives.
     //   'api'   -> e-Samarth Student Data API called live (fill in the 'api' section below)
-    'source' => 'excel',
+    'source' => 'db',
 
         // Where the right-hand Programme/Subject panel gets its data:
     'source' => 'db',

@@ -3,12 +3,12 @@ return [
     'source' => 'db', // Configured to load directly from SQL Database as requested
 
     'db' => [
-        'host' => ' sql12.freesqldatabase.com',
-        'name' => 'sql12839543',
-        'user' => 'sql12839543',
-        'pass' => 'FMr4PLAibt',
-    ],
-
+    'host' => 'sql12.freesqldatabase.com', // Update if changed
+    'name' => 'sql12839543',
+    'user' => 'sql12839543',
+    'pass' => 'FMr4PLAibt',
+    'port' => 3306,
+],
     'auth' => [
         'otp'          => false, // Disabled for easy default testing
         'otp_ttl'      => 600,

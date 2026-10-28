@@ -1,9 +1,4 @@
 <?php
-/**
- * MySQL-backed data source (config 'source' => 'db').
- * Reads the colleges / programmes / subjects / programme_subjects tables.
- * Returns the same shapes as excel_source.php so the page needs no changes.
- */
 require_once __DIR__ . '/db.php';
 
 function db_wrap(callable $fn): array {
@@ -34,7 +29,6 @@ function db_programmes(): array {
     });
 }
 
-/** Exam sessions: [['name'=>..., 'current'=>bool], ...] */
 function db_sessions(): array {
     return db_wrap(fn() => array_map(
         fn($r) => ['name' => $r['name'], 'current' => (bool)$r['is_current']],
@@ -61,20 +55,10 @@ function db_subjects(string $programmeId): array {
                 'title' => $r['paper_title'],
             ], $rows);
         }
-        // No programme -> subject links (e.g. data synced only from the API): offer the whole subject list
         $all = $pdo->query('SELECT id, name, code FROM subjects WHERE is_active = 1 ORDER BY name LIMIT 5000')->fetchAll();
         return array_map(fn($r) => [
             'id' => $r['code'] !== '' && $r['code'] !== null ? $r['code'] : 's' . $r['id'],
             'name' => $r['name'], 'code' => (string)$r['code'], 'title' => '',
         ], $all);
     });
-}
-
-/** Row counts for test.php */
-function db_counts(): array {
-    $out = [];
-    foreach (['colleges', 'programmes', 'subjects', 'programme_subjects'] as $t) {
-        $out[$t] = (int)db()->query("SELECT COUNT(*) FROM `$t`")->fetchColumn();
-    }
-    return $out;
 }

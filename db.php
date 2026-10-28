@@ -1,5 +1,5 @@
 <?php
-/** MySQL connection (XAMPP) + auto-create database and tables from schema.sql. */
+/** MySQL connection & auto-schema setup */
 
 function cfg(): array {
     static $c = null;
@@ -16,10 +16,9 @@ function db(): PDO {
     $port = isset($d['port']) ? ';port=' . (int)$d['port'] : '';
     $name = str_replace('`', '', $d['name']);
     try {
-        // Shared hosting (InfinityFree etc.): the database already exists and CREATE DATABASE is not allowed
         $pdo = new PDO("mysql:host={$d['host']}$port;dbname=$name;charset=utf8mb4", $d['user'], $d['pass'], $opts);
     } catch (PDOException $e) {
-        if ((int)($e->errorInfo[1] ?? 0) !== 1049) {         // 1049 = unknown database -> only then try to create it (XAMPP)
+        if ((int)($e->errorInfo[1] ?? 0) !== 1049) {
             http_response_code(500);
             exit('<h3>Database connection failed</h3><p>' . htmlspecialchars($e->getMessage()) .
                  '</p><p>Check the <code>db</code> section of config.php: host, database name, user and password.</p>');
@@ -29,37 +28,35 @@ function db(): PDO {
         $pdo->exec("USE `$name`");
     }
 
-    // schema.sql is the single source of truth for the tables (all CREATE TABLE IF NOT EXISTS)
     $sql = file_get_contents(__DIR__ . '/schema.sql');
     if ($sql === false) throw new RuntimeException('schema.sql not found next to db.php');
-    $sql = preg_replace('/--[^\n]*/', '', $sql);                 // strip comments
+    $sql = preg_replace('/--[^\n]*/', '', $sql);
     foreach (explode(';', $sql) as $stmt) {
         if (trim($stmt) !== '') $pdo->exec($stmt);
     }
 
-    // Upgrade databases created by an earlier version (CREATE IF NOT EXISTS does not add new columns)
+    // Dynamic schema updates
     if (!$pdo->query("SHOW COLUMNS FROM programmes LIKE 'faculty'")->fetch()) {
-        $pdo->exec('ALTER TABLE programmes ADD COLUMN faculty VARCHAR(30) NULL AFTER name');
+        $pdo->exec("ALTER TABLE programmes ADD COLUMN faculty VARCHAR(100) NULL AFTER name");
     }
     if (!$pdo->query("SHOW COLUMNS FROM papersetters LIKE 'address'")->fetch()) {
-        $pdo->exec('ALTER TABLE papersetters ADD COLUMN address VARCHAR(500) NULL AFTER college_name');
+        $pdo->exec("ALTER TABLE papersetters ADD COLUMN address VARCHAR(500) NULL AFTER college_name");
     }
     if (!$pdo->query("SHOW COLUMNS FROM papers LIKE 'course_name_dev'")->fetch()) {
-        $pdo->exec('ALTER TABLE papers ADD COLUMN course_name_dev VARCHAR(255) NULL AFTER subject_id');
+        $pdo->exec("ALTER TABLE papers ADD COLUMN course_name_dev VARCHAR(255) NULL AFTER subject_id");
     }
     if (!$pdo->query("SHOW COLUMNS FROM papers LIKE 'no_students'")->fetch()) {
-        $pdo->exec('ALTER TABLE papers ADD COLUMN no_students TINYINT(1) NOT NULL DEFAULT 0 AFTER course_name_dev');
+        $pdo->exec("ALTER TABLE papers ADD COLUMN no_students TINYINT(1) NOT NULL DEFAULT 0 AFTER course_name_dev");
     }
     if (!$pdo->query("SHOW COLUMNS FROM papers LIKE 'created_by'")->fetch()) {
-        $pdo->exec('ALTER TABLE papers ADD COLUMN created_by INT NULL');
+        $pdo->exec("ALTER TABLE papers ADD COLUMN created_by INT NULL");
     }
     if (!$pdo->query("SHOW COLUMNS FROM papersetters LIKE 'refused'")->fetch()) {
-        $pdo->exec('ALTER TABLE papersetters ADD COLUMN refused TINYINT(1) NOT NULL DEFAULT 0');
+        $pdo->exec("ALTER TABLE papersetters ADD COLUMN refused TINYINT(1) NOT NULL DEFAULT 0");
     }
     foreach (['college_code' => 'VARCHAR(20)', 'college_name' => 'VARCHAR(255)'] as $col => $type) {
         if (!$pdo->query("SHOW COLUMNS FROM users LIKE '$col'")->fetch()) $pdo->exec("ALTER TABLE users ADD COLUMN $col $type NULL");
     }
-    // Faculty names such as "Faculty of Humanities" need more than the old 30/50 characters
     foreach (['programmes' => 30, 'papers' => 50] as $tbl => $old) {
         $c = $pdo->query("SHOW COLUMNS FROM $tbl LIKE 'faculty'")->fetch();
         if ($c && preg_match('/varchar\((\d+)\)/i', $c['Type'], $m) && (int)$m[1] < 100) {

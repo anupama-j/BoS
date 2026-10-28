@@ -25,7 +25,7 @@ return [
 
     /* ---- login ---- */
     'auth' => [
-        'otp'          => true,     // true = password + 6-digit code sent by email; false = password only
+        'otp'          => false,     // true = password + 6-digit code sent by email; false = password only
         'otp_ttl'      => 600,      // seconds a code stays valid (10 minutes)
         'otp_tries'    => 5,        // wrong codes allowed per code
         'resend_after' => 60,       // seconds before "send a new code" is allowed

@@ -10,6 +10,11 @@ require_once __DIR__ . '/db_source.php';
 
 function src(): string { return cfg()['source'] ?? 'excel'; }
 
+/** Does the data source say which papers belong to which programme? (false -> the dashboard cannot compute "pending") */
+function src_has_structure(): bool {
+    return match (src()) { 'api' => false, 'db' => !db_csv_table_mode(), default => !programmes_from_csv() };
+}
+
 function src_programmes(): array {
     return match (src()) { 'db' => db_programmes(), 'api' => get_programmes(), default => excel_programmes() };
 }

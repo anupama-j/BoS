@@ -28,7 +28,7 @@ $setCount = []; foreach ($setters as $s) $setCount[$s['paper_id']] = ($setCount[
 $byKey = []; foreach ($papers as $p) $byKey[$p['programme_id'] . '|' . $p['subject_id']][] = $p;
 
 /* ---------------- expected papers (catalogue) vs recorded ---------------- */
-$hasExpected = src() !== 'api' && !(src() === 'excel' && programmes_from_csv());          // in API mode "subjects" is the whole course list, so there is no per-programme expectation
+$hasExpected = src_has_structure();          // in API mode "subjects" is the whole course list, so there is no per-programme expectation
 $prog = []; $pending = []; $tot = ['done' => 0, 'incomplete' => 0, 'nostud' => 0, 'pending' => 0, 'expected' => 0];
 $seen = [];
 if ($hasExpected) {

@@ -1,0 +1,4 @@
+config.local.php
+data/cache/
+data/sessions/
+*.log

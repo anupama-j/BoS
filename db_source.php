@@ -131,12 +131,29 @@ function db_subjects(string $programmeId): array {
                 ], $rows);
             }
         }
-        // No links (the programme CSV has no papers): offer the whole subject list; the panel has a search box
-        $all = $pdo->query("SELECT id, $sname AS name, $scode AS code FROM subjects" . ($act ? " WHERE $act = 1" : '') . " ORDER BY $sname LIMIT 20000")->fetchAll();
-        return array_map(fn($r) => [
-            'id' => $r['code'] !== '' && $r['code'] !== null ? (string)$r['code'] : 's' . $r['id'],
-            'name' => $r['name'], 'code' => (string)$r['code'], 'title' => '',
-        ], $all);
+        // No links (the programme CSV has no papers): offer every subject; the panel has a search box.
+        $q = function (bool $activeOnly) use ($pdo, $sname, $scode, $act) {
+            return $pdo->query("SELECT id, $sname AS name, $scode AS code FROM subjects" . ($activeOnly && $act ? " WHERE $act = 1" : '') . " ORDER BY $sname LIMIT 20000")->fetchAll();
+        };
+        $all = db_cols('subjects') ? ($q(true) ?: $q(false)) : [];        // is_active may be NULL / 0 in an imported table
+        if ($all) {
+            return array_map(fn($r) => [
+                'id' => $r['code'] !== '' && $r['code'] !== null ? (string)$r['code'] : 's' . $r['id'],
+                'name' => $r['name'], 'code' => (string)$r['code'], 'title' => '',
+            ], $all);
+        }
+        // subjects table is empty: use the paper list held in programme_subjects, then the catalogue files
+        if (db_cols('programme_subjects') && ($pc = db_pick('programme_subjects', ['paper_code'])) && ($pt = db_pick('programme_subjects', ['paper_title']))) {
+            $rows = $pdo->query("SELECT DISTINCT $pc AS code, $pt AS title FROM programme_subjects WHERE $pc IS NOT NULL AND $pc <> '' ORDER BY $pc LIMIT 20000")->fetchAll();
+            if ($rows) return array_map(fn($r) => ['id' => (string)$r['code'], 'name' => (string)$r['title'], 'code' => (string)$r['code'], 'title' => (string)$r['title']], $rows);
+        }
+        try {
+            $cat = catalogue(); $u = [];
+            foreach ($cat['subjects'] as $list) foreach ($list as $x) $u[$x['id']] ??= $x;
+            if ($u) { uasort($u, fn($x, $y) => strnatcasecmp($x['code'] . $x['name'], $y['code'] . $y['name'])); return array_values($u); }
+        } catch (Throwable $e) { /* no catalogue files either */ }
+        throw new RuntimeException('No subjects found. Table subjects has ' . db_rowcount('subjects') . ' row(s), programme_subjects has '
+            . db_rowcount('programme_subjects') . ' and data/catalogue has no .xlsx. Import the subjects/papers list into the subjects table (columns code, name, is_active).');
     });
 }
 

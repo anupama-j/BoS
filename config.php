@@ -1,6 +1,6 @@
 <?php
 return [
-    'source' => 'db', // Configured to load directly from SQL Database as requested
+    'source' => 'excel', // Configured to load directly from SQL Database as requested
 
     'db' => [
     'host' => 'sql12.freesqldatabase.com', // Update if changed

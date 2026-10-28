@@ -1,0 +1,28 @@
+/* Landscape table reports (admin_report.php, college_report.php) */
+@page { size: A4 landscape; margin: 10mm; @bottom-right { content: counter(page) "/" counter(pages); font-size: 8pt; } }
+* { box-sizing:border-box; }
+body { margin:0; padding:0 0 30px; font:9.5pt/1.3 system-ui,"Nirmala UI","Mangal",sans-serif; color:#000; background:#e9ebf0; }
+.toolbar { position:sticky; top:0; z-index:5; display:flex; gap:14px; align-items:center; flex-wrap:wrap; padding:10px 20px; background:#1d2433; color:#dfe5f5; font:14px system-ui,sans-serif; }
+.toolbar button { cursor:pointer; border:0; border-radius:6px; padding:8px 14px; font:inherit; background:#2d5be3; color:#fff; }
+.toolbar a { color:#cfd8ff; }
+.toolbar select { padding:5px; font:inherit; }
+.page { width:297mm; max-width:100%; margin:16px auto 0; padding:10mm; background:#fff; box-shadow:0 1px 6px rgba(0,0,0,.2); }
+.top { display:flex; justify-content:space-between; font-weight:700; }
+h1 { margin:2mm 0 1mm; text-align:center; font-size:13pt; text-decoration:underline; }
+.sub { text-align:center; margin:0 0 4mm; font-size:9.5pt; }
+table { width:100%; border-collapse:collapse; margin-top:2mm; }
+th, td { border:1px solid #000; padding:1.3mm 1.8mm; text-align:left; vertical-align:top; overflow-wrap:anywhere; }
+thead { display:table-header-group; }
+th { background:#eee; font-size:9pt; }
+tr { break-inside:avoid; }
+td.n { width:8mm; text-align:right; }
+tr.prog td { background:#d9e1f2; font-weight:700; font-size:10.5pt; }
+tr.subj td { background:#f1f3f8; font-weight:700; }
+td.msg { font-style:italic; text-align:center; }
+.dev { font-weight:700; }
+.empty { text-align:center; padding:40px; font:14px system-ui,sans-serif; }
+.foot { margin-top:4mm; font-size:8.5pt; text-align:right; }
+@media print { body { background:#fff; padding:0; } .toolbar { display:none; } .page { box-shadow:none; margin:0; padding:0; width:auto; } }
+th.m { min-width:25mm; } th.e { min-width:52mm; } th.nm { min-width:32mm; }
+
+b.ref { font-style:italic; }

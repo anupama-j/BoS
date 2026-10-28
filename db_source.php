@@ -66,14 +66,16 @@ function db_sessions(): array {
 function db_subjects(string $programmeId): array {
     return db_wrap(function () use ($programmeId) {
         $pdo = db();
-        // Check if programme_subjects has records, otherwise pull courses from dataexportprogrammecoursestructure
+        
+        // 1. Try relational join if programme_subjects table is used
         try {
             $st = $pdo->prepare(
                 'SELECT s.id AS sid, s.name, s.code AS scode, ps.paper_code, ps.paper_title
                    FROM programme_subjects ps JOIN subjects s ON s.id = ps.subject_id
-                  WHERE ps.programme_id = ? AND s.is_active = 1 ORDER BY s.name, ps.paper_code'
+                  WHERE (ps.programme_id = ? OR ps.paper_code = ?) AND s.is_active = 1 
+                  ORDER BY s.name, ps.paper_code'
             );
-            $st->execute([$programmeId]);
+            $st->execute([$programmeId, $programmeId]);
             $rows = $st->fetchAll();
             if ($rows) {
                 return array_map(fn($r) => [
@@ -84,6 +86,40 @@ function db_subjects(string $programmeId): array {
                 ], $rows);
             }
         } catch (Throwable $e) {}
+
+        // 2. Direct query against dataexportprogrammecoursestructure table
+        $sql = "SELECT `code` AS id, 
+                       `title_english` AS name, 
+                       `code`, 
+                       `specialization` AS title 
+                FROM `dataexportprogrammecoursestructure` 
+                WHERE `Programme ID` = :pid 
+                   OR `code` = :pid 
+                   OR `title_english` LIKE :pname 
+                ORDER BY `title_english`";
+                
+        $st = $pdo->prepare($sql);
+        $st->execute([
+            ':pid'   => $programmeId,
+            ':pname' => '%' . $programmeId . '%'
+        ]);
+        $rows = $st->fetchAll();
+
+        // 3. Fallback: Return all course listings if specific match is empty
+        if (!$rows) {
+            $rows = $pdo->query("SELECT `code` AS id, `title_english` AS name, `code`, `specialization` AS title 
+                                 FROM `dataexportprogrammecoursestructure` 
+                                 LIMIT 200")->fetchAll();
+        }
+
+        return array_map(fn($r) => [
+            'id'    => (string)($r['id'] !== '' ? $r['id'] : $r['code']),
+            'name'  => (string)$r['name'],
+            'code'  => (string)$r['code'],
+            'title' => (string)($r['title'] ?? ''),
+        ], $rows);
+    });
+}
 
         // Fallback to reading subject from dataexportprogrammecoursestructure for this Programme ID / code
         $st = $pdo->prepare("SELECT `code` AS id, `title_english` AS name, `code`, `specialization` AS title 

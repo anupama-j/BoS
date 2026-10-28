@@ -3,10 +3,10 @@ return [
     'source' => 'db', // Configured to load directly from SQL Database as requested
 
     'db' => [
-        'host' => '127.0.0.1',
-        'name' => 'papersetter_db',
-        'user' => 'root',
-        'pass' => '',
+        'host' => 'sql12.freesqldatabase.com',
+        'name' => 'sql12839543',
+        'user' => 'sql12839543',
+        'pass' => 'FMr4PLAibt',
     ],
 
     'auth' => [

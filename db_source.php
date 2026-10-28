@@ -121,6 +121,40 @@ function db_subjects(string $programmeId): array {
     });
 }
 
+        // 2. Direct query against dataexportprogrammecoursestructure table
+        $sql = "SELECT `code` AS id, 
+                       `title_english` AS name, 
+                       `code`, 
+                       `specialization` AS title 
+                FROM `dataexportprogrammecoursestructure` 
+                WHERE `Programme ID` = :pid 
+                   OR `code` = :pid 
+                   OR `title_english` LIKE :pname 
+                ORDER BY `title_english`";
+                
+        $st = $pdo->prepare($sql);
+        $st->execute([
+            ':pid'   => $programmeId,
+            ':pname' => '%' . $programmeId . '%'
+        ]);
+        $rows = $st->fetchAll();
+
+        // 3. Fallback: Return all course listings if specific match is empty
+        if (!$rows) {
+            $rows = $pdo->query("SELECT `code` AS id, `title_english` AS name, `code`, `specialization` AS title 
+                                 FROM `dataexportprogrammecoursestructure` 
+                                 LIMIT 200")->fetchAll();
+        }
+
+        return array_map(fn($r) => [
+            'id'    => (string)($r['id'] !== '' ? $r['id'] : $r['code']),
+            'name'  => (string)$r['name'],
+            'code'  => (string)$r['code'],
+            'title' => (string)($r['title'] ?? ''),
+        ], $rows);
+    });
+}
+
         // Fallback to reading subject from dataexportprogrammecoursestructure for this Programme ID / code
         $st = $pdo->prepare("SELECT `code` AS id, `title_english` AS name, `code`, `specialization` AS title 
                              FROM `dataexportprogrammecoursestructure` 

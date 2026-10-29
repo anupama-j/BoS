@@ -196,6 +196,7 @@ $setters = $pdo->prepare('SELECT * FROM papersetters WHERE paper_id = ? ORDER BY
   </aside>
 </div>
 
+<script src="assets/collegepick.js?v=<?= (int)@filemtime(__DIR__ . '/assets/collegepick.js') ?>"></script>
 <script src="assets/app.js?v=<?= (int)@filemtime(__DIR__ . '/assets/app.js') ?>"></script>
 </body>
 </html>

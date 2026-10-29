@@ -12,7 +12,7 @@ function src(): string { return cfg()['source'] ?? 'excel'; }
 
 /** Does the data source say which papers belong to which programme? (false -> the dashboard cannot compute "pending") */
 function src_has_structure(): bool {
-    return match (src()) { 'api' => false, 'db' => !db_csv_table_mode(), default => !programmes_from_csv() };
+    return match (src()) { 'api' => false, 'db' => !db_csv_table_mode() || db_courses_mode(), default => !programmes_from_csv() };
 }
 
 function src_programmes(): array {
@@ -44,4 +44,14 @@ function src_find_subject(string $programmeId, string $subjectId): ?array {
     if ($subjectId === '') return null;
     foreach (src_subjects($programmeId)['items'] as $s) if ((string)$s['id'] === $subjectId) return $s;
     return null;
+}
+
+/** Programmes the dashboard should expect papers for: with a courses table only the programmes that have courses. */
+function src_expected_programmes(): array {
+    $items = src_programmes()['items'];
+    if (src() === 'db' && db_courses_mode()) {
+        $codes = db_courses_programme_codes();
+        $items = array_values(array_filter($items, fn($p) => isset($codes[(string)($p['code'] ?? '')])));
+    }
+    return $items;
 }

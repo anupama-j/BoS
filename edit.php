@@ -70,8 +70,8 @@ function ps_row(array $r, array $ROLES): string {
     foreach ($ROLES as $x) $o .= '<option' . ($x === ($r['appointed_as'] ?? '') ? ' selected' : '') . '>' . h($x) . '</option>';
     return '<tr' . (!empty($r['refused']) ? ' class="refused"' : '') . '><td class="sr"></td>'
         . '<td><input name="ps_name[]" value="' . h($r['name'] ?? '') . '"></td>'
-        . '<td><input name="ps_ccode[]" list="collegeCodes" value="' . h($r['college_code'] ?? '') . '" autocomplete="off"></td>'
-        . '<td><input name="ps_college[]" list="collegeNames" value="' . h($r['college_name'] ?? '') . '" autocomplete="off"></td>'
+        . '<td><input name="ps_ccode[]" value="' . h($r['college_code'] ?? '') . '" autocomplete="off"></td>'
+        . '<td><input name="ps_college[]" value="' . h($r['college_name'] ?? '') . '" autocomplete="off"></td>'
         . '<td><input name="ps_address[]" value="' . h($r['address'] ?? '') . '" placeholder="Address"></td>'
         . '<td><select name="ps_role[]">' . $o . '</select></td>'
         . '<td><input name="ps_email[]" type="email" value="' . h($r['email'] ?? '') . '"></td>'
@@ -82,7 +82,7 @@ function ps_row(array $r, array $ROLES): string {
 ?>
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Edit record</title><link rel="stylesheet" href="assets/style.css">
+<title>Edit record</title><link rel="stylesheet" href="assets/style.css?v=<?= (int)@filemtime(__DIR__ . '/assets/style.css') ?>">
 <style>tr.refused input { text-decoration:line-through; color:#888; } tr.refused select.st { background:#fdecea; } .ro { background:#f1f3f8; }</style></head>
 <body>
 <header>Edit record &mdash; <a href="<?= h($back) ?>" style="color:#fff">&larr; back to register</a>
@@ -113,8 +113,7 @@ function ps_row(array $r, array $ROLES): string {
   <div class="actions"><button type="button" class="sec" id="addRow">+ Add papersetter</button><button type="submit">Save changes</button></div>
 </form>
 </div>
-<datalist id="collegeCodes"><?php foreach ($colleges as $c): ?><option value="<?= h($c['code']) ?>"><?= h($c['name']) ?></option><?php endforeach; ?></datalist>
-<datalist id="collegeNames"><?php foreach ($colleges as $c): ?><option value="<?= h($c['name']) ?>"><?= h($c['code']) ?></option><?php endforeach; ?></datalist>
+<script src="assets/collegepick.js?v=<?= (int)@filemtime(__DIR__ . '/assets/collegepick.js') ?>"></script>
 <template id="newRow"><?= ps_row([], $ROLES) ?></template>
 <script>
 const COLLEGES = <?= json_encode($colleges, JSON_UNESCAPED_UNICODE) ?>;
@@ -122,8 +121,7 @@ const tb = document.querySelector('#psTable tbody');
 function wire(tr) {
   tr.querySelector('.del').onclick = () => { tr.remove(); renum(); };
   const code = tr.querySelector('[name="ps_ccode[]"]'), name = tr.querySelector('[name="ps_college[]"]');
-  code.addEventListener('input', () => { const c = COLLEGES.find(x => String(x.code) === code.value.trim()); if (c) name.value = c.name; });
-  name.addEventListener('input', () => { const c = COLLEGES.find(x => x.name === name.value.trim()); if (c) code.value = c.code; });
+  window.attachCollegePicker(code, name, () => COLLEGES);
   tr.querySelector('select.st').addEventListener('change', e => tr.classList.toggle('refused', e.target.value === '1'));
 }
 function renum() { tb.querySelectorAll('.sr').forEach((td, i) => td.textContent = i + 1); }

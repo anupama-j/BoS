@@ -32,7 +32,7 @@ $hasExpected = src_has_structure();          // in API mode "subjects" is the wh
 $prog = []; $pending = []; $tot = ['done' => 0, 'incomplete' => 0, 'nostud' => 0, 'pending' => 0, 'expected' => 0];
 $seen = [];
 if ($hasExpected) {
-    foreach (src_programmes()['items'] as $pr) {
+    foreach (src_expected_programmes() as $pr) {
         $pid = (string)$pr['id'];
         $prog[$pid] = ['id' => $pid, 'name' => $pr['name'], 'code' => $pr['code'] ?? '', 'faculty' => $pr['faculty'] ?? '', 'done' => 0, 'incomplete' => 0, 'nostud' => 0, 'pending' => 0];
         foreach (src_subjects($pid)['items'] as $sub) {

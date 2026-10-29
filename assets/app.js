@@ -21,15 +21,13 @@ async function getJSON(url) {
 
 /* ---------- colleges (from the catalogue): code <-> name auto-fill ---------- */
 let COLLEGES = [];
-document.body.insertAdjacentHTML('beforeend', '<datalist id="collegeCodes"></datalist><datalist id="collegeNames"></datalist>');
 
 async function loadColleges() {
   try {
     const res = await getJSON('api.php?action=colleges');
     if (res.error) $('#apiNote').insertAdjacentHTML('beforeend', `<div class="warn">Colleges: ${esc(res.error)}</div>`);
     COLLEGES = res.items || [];
-    $('#collegeCodes').innerHTML = COLLEGES.map(c => `<option value="${esc(c.code)}">${esc(c.name)}</option>`).join('');
-    $('#collegeNames').innerHTML = COLLEGES.map(c => `<option value="${esc(c.name)}">${esc(c.code)}</option>`).join('');
+    if (!COLLEGES.length && !res.error) $('#apiNote').insertAdjacentHTML('beforeend', '<div class="warn">No colleges found: the colleges table is empty.</div>');
   } catch (e) {
     $('#apiNote').insertAdjacentHTML('beforeend', `<div class="warn">Could not load colleges: ${esc(e.message)}</div>`);
   }
@@ -41,8 +39,8 @@ function addRow(v = {}) {
   tr.innerHTML = `
     <td class="sr"></td>
     <td><input name="ps_name[]" value="${esc(v.name)}"></td>
-    <td><input name="ps_ccode[]" list="collegeCodes" value="${esc(v.ccode)}" autocomplete="off"></td>
-    <td><input name="ps_college[]" list="collegeNames" value="${esc(v.college)}" autocomplete="off"></td>
+    <td><input name="ps_ccode[]" value="${esc(v.ccode)}" autocomplete="off"></td>
+    <td><input name="ps_college[]" value="${esc(v.college)}" autocomplete="off"></td>
     <td><input name="ps_address[]" value="${esc(v.address)}" placeholder="Address"></td>
     <td><select name="ps_role[]">${ROLES.map(r => `<option ${r === v.role ? 'selected' : ''}>${esc(r)}</option>`).join('')}</select></td>
     <td><input name="ps_email[]" type="email" value="${esc(v.email)}"></td>
@@ -61,6 +59,7 @@ function addRow(v = {}) {
     if (c) code.value = c.code;
   });
 
+  window.attachCollegePicker(code, name, () => COLLEGES);
   $('#psTable tbody').appendChild(tr);
   renumber();
 }
@@ -78,7 +77,7 @@ function note(res, what) {
   let html = '';
   if (res.source === 'demo')       html = `<div class="warn">Could not reach e-Samarth &mdash; showing sample ${what}.<br>${esc(res.error)}<br><a href="test.php">Run connection test</a></div>`;
   else if (res.error)              html = `<div class="warn">${esc(res.error)}${res.source === 'excel' ? '<br><a href="test.php">Run check</a>' : ''}</div>`;
-  else if (what === 'Programmes')  html = `<div class="src">Source: ${res.source === 'excel' ? 'Excel (data/catalogue)' : 'e-Samarth (' + esc(res.source) + ')'} &middot; ${res.items.length} programmes</div>`;
+  else if (what === 'Programmes')  html = `<div class="src">Source: ${res.source === 'excel' ? 'Excel (data files)' : res.source === 'db' ? 'Database' : 'e-Samarth (' + esc(res.source) + ')'} &middot; ${res.items.length} programmes</div>`;
   n.insertAdjacentHTML('beforeend', html);
 }
 
@@ -137,7 +136,7 @@ async function renderSubjects(p, el) {
         const d = document.createElement('div');
         d.className = 'sub' + (FS === String(s.id) && FP === String(p.id) ? ' active' : '');
         d.textContent = s.name + (s.code ? ` (${s.code})` : '');
-        d.title = (s.title ? s.title + '\n' : '') + 'Click: fill the form. Double-click: show saved records for this subject.';
+        d.title = (s.desc ? s.desc + '\n' : (s.title ? s.title + '\n' : '')) + 'Click: fill the form. Double-click: show saved records for this subject.';
         d.onclick = () => {
           pickProgramme(p); pickSubject(s);
           document.querySelectorAll('.sub').forEach(x => x.classList.remove('active'));

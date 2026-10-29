@@ -69,3 +69,11 @@ header .who a { color:#cfd8ff; }
 .paper { margin-left:6px; }
 .tag.nostud { background:#fff4e0; color:#8a5a00; }
 #psWrap.off { opacity:.45; pointer-events:none; }
+
+/* college picker dropdown (assets/collegepick.js) */
+.cpick { position:fixed; z-index:50; max-width:min(560px, 96vw); max-height:260px; overflow:auto; background:var(--card,#fff); color:var(--ink,#222); border:1px solid var(--line,#ccd); border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,.2); font-size:13px; }
+.cpick[hidden] { display:none; }
+.cpick-row { padding:6px 10px; cursor:pointer; border-bottom:1px solid rgba(128,128,128,.15); }
+.cpick-row b { display:inline-block; min-width:44px; margin-right:6px; }
+.cpick-row:hover, .cpick-row.on { background:rgba(45,91,227,.14); }
+.cpick-none { padding:10px; color:#888; }
